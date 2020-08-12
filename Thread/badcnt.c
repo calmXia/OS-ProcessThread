@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <semaphore.h>
 
 void *thread(void *vargp);/* Thread routine prototype */
 
 /* Global shared variable */
 volatile long cnt = 0; /* Counter */
+sem_t mutex; /* semaphore that protects counter */
 
 int main(int argc, char **argv)
 {
@@ -19,6 +21,7 @@ int main(int argc, char **argv)
 	}
 	niters = atoi(argv[1]);
 
+	sem_init(&mutex, 0, 1); /* mutex = 1*/
 	/* Create threads and wait for them to finish */
 	pthread_create(&tid1, NULL, thread, &niters);
 	pthread_create(&tid2, NULL, thread, &niters);
@@ -40,8 +43,11 @@ void *thread(void *vargp)
 {
 	long i, niters = *((long *)vargp);
 	
-	for (i = 0; i < niters; i++)
+	for (i = 0; i < niters; i++) {
+		sem_wait(&mutex);
 		cnt++;
+		sem_post(&mutex);
+	}
 
 	return NULL;
 }
